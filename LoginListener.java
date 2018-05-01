@@ -32,9 +32,9 @@ private JTextField farmacist_name,farmacist_pass;
         DBManageinter dbm=(DBManageinter)registry.lookup(farm);
         Farmacist f=dbm.getFarmacist(farmacist_name.getText());
         System.out.println(farmacist_name.getText());
-        m.farmacie=dbm.getFarmacieId(f.getIDFarmacie());
         if(f!=null)
-        {System.out.println(f.getNume()+" "+f.getParola());
+        {m.farmacie=dbm.getFarmacieId(f.getIDFarmacie());
+        	System.out.println(f.getNume()+" "+f.getParola());
         if(f.getParola().equals(farmacist_pass.getText()))
         	{m.serv=s;
         	m.db=dbm;

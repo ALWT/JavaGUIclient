@@ -1,16 +1,8 @@
-import java.rmi.RemoteException;
-import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
-import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.List;
-import java.io.*;
 import classes.*;
 import interfaces.*;
 import interfacesch.*;
-
-import java.awt.Dimension;
-import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -19,20 +11,21 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JPasswordField;
 
 public class Main {
 	public  double total=0;
 	public Server serv=null;
 	public Farmacie farmacie=null;
-	public List<SoldProduct> sp=new ArrayList<SoldProduct>();
-	public List<JTextField> quantities=new ArrayList<JTextField>();
+	public List<SoldProduct> sp;
+	public List<JTextField> quantities;
 	public JFrame frame = new JFrame("Alba");
 	public JLabel label_resp= new JLabel();
 	public JLabel total_price= new JLabel("Total:     \n");
 	public JPanel products_panel= new JPanel();
 	public JPanel left_total,main_opp;
 	private JTextField farmacist_name=new JTextField(15);
-	private JTextField farmacist_pass=new JTextField(15);
+	private JPasswordField farmacist_pass=new JPasswordField(15);
 	private JPanel jpl=new JPanel();
 	private JTextField search_field=new JTextField(20);
 	public DBManageinter db;
@@ -44,7 +37,8 @@ public class Main {
 	public Med_Farmacieinterch mfich;
 	public Medicamentinterch mich;
 	
-    public Main() {left_total=new JPanel(new GridLayout(2,1));
+    public Main() {
+    left_total=new JPanel(new GridLayout(2,1));
     left_total.add(total_price);
     left_total.add(this.products_panel);
     frame.setLayout(new GridLayout(1,3));
@@ -78,14 +72,18 @@ public class Main {
     }
     
     public void search(JPanel jpl,JTextField search_field,Main m)
-    {jpl.removeAll();
+    {//Put results in jpl
+    //Search by text in search_field
+    //m -> object app
+    jpl.removeAll();
     int found =0;
 	try {
 	List<Medicament> ml=m.fi.getMedicamentsFarmacie(m.farmacie);
 	jpl.setLayout(new GridLayout(ml.size(),1));
-    
+    //System.out.println(m.farmacie.getNume()+" search "+ml.size()+" "+search_field.getText());
 	for(Medicament med:ml)
-    {if((med.getNume().matches("(.*)"+search_field.getText()+"(.*)"))||Integer.parseInt(search_field.getText())==med.getID())
+    {//System.out.println("medicament: "+med.getNume());
+	if((med.getNume().matches("(.*)"+search_field.getText()+"(.*)"))||search_field.getText().equals(med.getID()))
     {boolean bought=false;
     	for(SoldProduct slp:m.sp)
     if(slp.m.getID()==med.getID())
@@ -95,7 +93,7 @@ public class Main {
     JLabel medname=new JLabel(med.getNume()+" "+med.getPret()+" "+m.mi.getMed_Farm(med.getID(), m.farmacie.getID()).getCantitate());
     JTextField quant=new JTextField(5);
     JButton but=new JButton("+");
-    but.addActionListener(new TotalChange(m,med,"+",quant));
+    but.addActionListener(new TotalChange(m,med,"-",quant));
     aux.add(medname);
     aux.add(quant);
     aux.add(but);
@@ -103,18 +101,24 @@ public class Main {
     found++;}
     }}}
     catch(Exception e)
-    {}
+    {e.printStackTrace();}
+	//search_field.setText("");
 	jpl.setLayout(new GridLayout(found,1));
 	jpl.revalidate();
 	jpl.repaint();
 	m.frame.pack();}
     
     public void build()
-    {total=0;
-    JPanel search_medicine=new JPanel();
+    {JPanel search_medicine=new JPanel();
     search_medicine.setLayout(new GridLayout(2,1));
     JPanel search_menu=new JPanel();
     JButton search_button=new JButton("Search");
+    JButton log_out=new JButton("Log out");
+    log_out.addActionListener(new ActionListener() {
+
+		public void actionPerformed(ActionEvent arg0) {
+			begin();			
+		}});
     search_menu.add(search_field);
     search_menu.add(search_button);
     search_button.addActionListener(new SearchListener(this,search_field,jpl));
@@ -123,15 +127,22 @@ public class Main {
     JButton buy=new JButton("Buy");
     buy.addActionListener(new BuyListener(this));
     this.frame.getContentPane().removeAll();
-    this.frame.setLayout(new GridLayout(1,3));
+    this.frame.setLayout(new GridLayout(1,4));
+    this.frame.add(log_out);
     this.frame.add(this.left_total);
 	this.frame.add(search_medicine);
 	this.frame.add(buy);
     this.frame.setVisible(true);
+    this.calc_total();
     this.frame.pack();}
     
 	public void begin() {
-	main_opp=new JPanel();
+	jpl=new JPanel();
+	total=0;
+	this.quantities=new ArrayList<JTextField>();
+	this.sp=new ArrayList<SoldProduct>();
+	 this.search_field.setText("");
+	 main_opp=new JPanel();
 	 main_opp.setLayout(new GridLayout(3,2));
 	 main_opp.add(new JLabel("User name"));
 	 main_opp.add(farmacist_name);
@@ -141,6 +152,9 @@ public class Main {
 	  JButton ok_login=new JButton("Login");
 	  ok_login.addActionListener(new LoginListener(this,farmacist_name,farmacist_pass));
 	  main_opp.add(ok_login);
+	  farmacist_name.setText("");
+	  farmacist_pass.setText("");
+	  this.frame.getContentPane().removeAll();
 	  frame.add(main_opp);
 	  frame.setVisible(true);
 	  frame.pack();
